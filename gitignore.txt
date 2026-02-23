@@ -1,0 +1,17 @@
+/.triton
+/.lightning_studio
+/model_store/*
+*.env.*
+.env
+.cursor-server
+.vscode-server
+.windsurf-server
+/.idea
+/.vscode
+*.pyc
+*.pt
+/*.cpython.*
+.model_store_ready
+.gitattributes
+.json
+.safetensors

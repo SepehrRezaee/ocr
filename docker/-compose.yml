@@ -1,0 +1,37 @@
+services:
+  ocr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sharifsetup-ocr
+    gpus: all
+    environment:
+      OCR_MODEL_STORE_DIR: /srv/model_store
+      OCR_MODEL_REPO_ID: allenai/olmOCR-2-7B-1025-FP8
+      OCR_REQUIRE_LOCAL_MODEL_STORE: "true"
+      OCR_AUTO_DOWNLOAD_MODEL_STORE: "true"
+      OCR_MODEL_FORCE_DOWNLOAD: "false"
+      OCR_VLLM_BASE_URL: http://127.0.0.1:8001
+      OCR_VLLM_PORT: 8001
+      OCR_VLLM_MODEL_ID: google/gemma-3-4b-it
+      OCR_VLLM_DTYPE: bfloat16
+      OCR_VLLM_MAX_MODEL_LEN: 8192
+      OCR_VLLM_TENSOR_PARALLEL_SIZE: 1
+      OCR_VLLM_GPU_MEMORY_UTILIZATION: 0.90
+      OCR_STARTUP_COMPAT_CHECK: "true"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5).read()",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 30
