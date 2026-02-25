@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ## 2) Configure
 
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
 
 ## 3) One-Time Model Download (Project Local)
@@ -27,7 +27,7 @@ PYTHONPATH=./ python3 -m app.bootstrap_model_store
 ```
 
 After download, model files are stored under:
-`./model_store/allenai--olmOCR-2-7B-1025-FP8`
+`./model_store/sharifsetup-ocr`
 
 ## 4) Run Locally
 

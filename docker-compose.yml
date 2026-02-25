@@ -9,6 +9,7 @@ services:
       OCR_APP_NAME: Sharifsetup-OCR
       OCR_MODEL_NAME: Sharifsetup-OCR
       OCR_MODEL_STORE_DIR: /srv/model_store
+      OCR_MODEL_LOCAL_DIR_NAME: sharifsetup-ocr
       OCR_MODEL_REPO_ID: allenai/olmOCR-2-7B-1025-FP8
       OCR_REQUIRE_LOCAL_MODEL_STORE: "true"
       OCR_AUTO_DOWNLOAD_MODEL_STORE: "false"

@@ -113,7 +113,7 @@ def validate_model_store(
 
 def resolve_repo_dir(settings: Settings) -> Path:
     model_store_dir = Path(settings.model_store_dir).expanduser().resolve()
-    return model_store_dir / settings.model_repo_id.replace("/", "--")
+    return model_store_dir / settings.model_local_dir_name
 
 
 def _download_model_snapshot(settings: Settings, model_store_dir: Path) -> None:

@@ -70,6 +70,7 @@ class Settings(BaseSettings):
 
     model_name: str = DISPLAY_MODEL_NAME
     model_store_dir: str = str(DEFAULT_MODEL_STORE_DIR)
+    model_local_dir_name: str = "sharifsetup-ocr"
     require_local_model_store: bool = True
     auto_download_model_store: bool = False
     model_force_download: bool = False
@@ -118,14 +119,24 @@ class Settings(BaseSettings):
     @classmethod
     def enforce_display_name(cls, value: str) -> str:
         normalized = value.strip()
-        if normalized != DISPLAY_MODEL_NAME:
+        if normalized.casefold() != DISPLAY_MODEL_NAME.casefold():
             raise ValueError(f"Display name must be '{DISPLAY_MODEL_NAME}'.")
-        return normalized
+        return DISPLAY_MODEL_NAME
 
     @field_validator("model_store_dir")
     @classmethod
     def expand_model_store_dir(cls, value: str) -> str:
         return str(Path(value).expanduser())
+
+    @field_validator("model_local_dir_name")
+    @classmethod
+    def normalize_model_local_dir_name(cls, value: str) -> str:
+        normalized = value.strip().strip("/").strip("\\")
+        if not normalized:
+            raise ValueError("model_local_dir_name must not be empty")
+        if "/" in normalized or "\\" in normalized:
+            raise ValueError("model_local_dir_name must be a single directory name")
+        return normalized
 
     @field_validator("model_filename")
     @classmethod

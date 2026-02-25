@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OCR_MODEL_NAME=Sharifsetup-OCR \
     OCR_API_PORT=8000 \
     OCR_MODEL_STORE_DIR=/srv/model_store \
+    OCR_MODEL_LOCAL_DIR_NAME=sharifsetup-ocr \
     OCR_REQUIRE_LOCAL_MODEL_STORE=true \
     OCR_AUTO_DOWNLOAD_MODEL_STORE=false \
     OCR_MODEL_FORCE_DOWNLOAD=false \
@@ -34,7 +35,7 @@ RUN python3 -m pip install --upgrade pip \
 COPY app ./app
 COPY docker ./docker
 COPY main.py ./main.py
-COPY env.example ./env.example
+COPY .env.example ./.env.example
 COPY README.md ./README.md
 COPY model_store /srv/model_store
 
