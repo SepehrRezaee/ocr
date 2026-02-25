@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_model_store(settings: Settings) -> str | None:
-    """Ensures model artifacts exist locally and honors offline settings."""
+    """Ensures model artifacts exist locally; downloads once on first run."""
     should_bootstrap = (
         settings.require_local_model_store
         or settings.auto_download_model_store
@@ -28,15 +28,15 @@ def ensure_model_store(settings: Settings) -> str | None:
         _write_bootstrap_marker(model_store_dir)
         return str(model_store_dir)
 
-    should_download = settings.model_force_download or settings.auto_download_model_store
-    if not should_download:
-        if settings.require_local_model_store:
-            raise RuntimeError(
-                f"Model artifacts are required but missing in '{repo_dir}'. "
-                "Set OCR_AUTO_DOWNLOAD_MODEL_STORE=true for initial bootstrap, "
-                "or download the model to OCR_MODEL_STORE_DIR before startup."
-            )
-        return None
+    if not settings.auto_download_model_store and not settings.model_force_download:
+        logger.warning(
+            "OCR_AUTO_DOWNLOAD_MODEL_STORE is disabled but local startup requires model files; proceeding with one-time bootstrap download.",
+            extra={
+                "model_name": settings.model_name,
+                "model_repo_id": settings.model_repo_id,
+                "model_store_dir": str(model_store_dir),
+            },
+        )
 
     _download_model_snapshot(settings=settings, model_store_dir=model_store_dir)
     if not _has_expected_artifacts(repo_dir, settings.model_filename):
@@ -113,7 +113,7 @@ def validate_model_store(
 
 def resolve_repo_dir(settings: Settings) -> Path:
     model_store_dir = Path(settings.model_store_dir).expanduser().resolve()
-    return model_store_dir / settings.model_local_dir_name
+    return model_store_dir / settings.model_repo_id.replace("/", "--")
 
 
 def _download_model_snapshot(settings: Settings, model_store_dir: Path) -> None:

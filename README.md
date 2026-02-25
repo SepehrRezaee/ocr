@@ -1,7 +1,7 @@
 # Sharifsetup OCR
 
-Production OCR API using FastAPI + local vLLM with offline-ready Docker packaging.
-The display name is fixed everywhere to `Sharifsetup-OCR`.
+Production OCR API for Persian, Hebrew, Arabic, and English using FastAPI + local vLLM inference.
+Swagger/OpenAPI title and runtime model display name are fixed to `sharifsetup-OCR`.
 
 ## 1) Install
 
@@ -18,18 +18,17 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-## 3) One-Time Model Download (Project Local)
+Set at least:
+- `OCR_MODEL_STORE_DIR`: local model directory (default `./model_store`)
+- `OCR_MODEL_REPO_ID`: Hugging Face model repo id (default `allenai/olmOCR-2-7B-1025-FP8`)
 
-Download `allenai/olmOCR-2-7B-1025-FP8` into `./model_store`:
+## 3) Runtime Behavior
 
-```bash
-PYTHONPATH=./ python3 -m app.bootstrap_model_store
-```
+- On first run, app startup downloads model artifacts into `OCR_MODEL_STORE_DIR`.
+- OCR inference is sent to local vLLM at `OCR_VLLM_BASE_URL` using `/v1/chat/completions`.
+- Uploaded image bytes are passed to the model as-is (no preprocessing).
 
-After download, model files are stored under:
-`./model_store/sharifsetup-ocr`
-
-## 4) Run Locally
+## 4) Run (Two Processes)
 
 Terminal A:
 
@@ -56,15 +55,16 @@ Success response:
 ```json
 {
   "request_id": "4d483dc5-79db-46c1-9d59-8f8668a75f15",
-  "model": "Sharifsetup-OCR",
+  "model": "sharifsetup-OCR",
   "markdown": "extracted markdown text",
   "processing_ms": 1423
 }
 ```
 
-## 6) Docker Offline Build/Run
+## 6) Docker (Single Dockerfile)
 
-The Docker image copies local `./model_store` into `/srv/model_store`, so the container can run offline.
+The single container starts local vLLM and FastAPI together.
+Model artifacts under local `./model_store` are baked into the image at build time.
 
 ```bash
 docker build -t sharifsetup-ocr .
@@ -73,17 +73,11 @@ docker run --rm --gpus all \
   sharifsetup-ocr
 ```
 
-Or with Compose:
-
-```bash
-docker compose up --build
-```
-
 Important:
-- Run step 3 before building the image.
-- Do not mount an empty volume to `/srv/model_store` because it hides bundled model files.
+- Do not mount an empty volume to `/srv/model_store` when using baked model artifacts, because it hides the bundled model files.
 
-## 7) Logging Flag
+## 7) Troubleshooting
 
-- `OCR_VERBOSE_LOGS=true` -> runtime log level is `DEBUG` (all levels visible).
-- `OCR_VERBOSE_LOGS=false` -> runtime log level is `ERROR` only.
+- Use the correct env var name: `PYTHONPATH` (not `PTYHONPATH`).
+- If startup fails on model download, verify `OCR_HF_TOKEN` or `HF_TOKEN`.
+- If FastAPI starts but readiness fails, check local vLLM endpoint: `http://127.0.0.1:8001/v1/models`.
