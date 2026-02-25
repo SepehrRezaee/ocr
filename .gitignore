@@ -2,7 +2,7 @@
 /.lightning_studio
 /model_store/*
 *.env.*
-.env
+
 .cursor-server
 .vscode-server
 .windsurf-server

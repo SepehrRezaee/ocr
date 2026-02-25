@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MODEL_STORE_DIR = PROJECT_ROOT / "model_store"
-DISPLAY_MODEL_NAME = "sharifsetup-OCR"
+DISPLAY_MODEL_NAME = "Sharifsetup-OCR"
 
 GEMMA_3_4B_OCR_PROMPT = """<system_directive>
 You are an expert, zero-shot multimodal extraction engine. Your task is to convert the provided physical documents, handwritten notes, digital desktop interfaces, and physical signage into structured Markdown. 
@@ -66,11 +66,13 @@ class Settings(BaseSettings):
     app_name: str = DISPLAY_MODEL_NAME
     app_version: str = "1.0.0"
     log_level: str = "INFO"
+    verbose_logs: bool = False
 
     model_name: str = DISPLAY_MODEL_NAME
     model_store_dir: str = str(DEFAULT_MODEL_STORE_DIR)
+    model_local_dir_name: str = "sharifsetup-ocr"
     require_local_model_store: bool = True
-    auto_download_model_store: bool = True
+    auto_download_model_store: bool = False
     model_force_download: bool = False
     model_repo_id: str = "allenai/olmOCR-2-7B-1025-FP8"
     model_filename: str | None = None
@@ -79,7 +81,7 @@ class Settings(BaseSettings):
     startup_compat_check: bool = True
     vllm_base_url: str = "http://127.0.0.1:8001"
     vllm_api_key: str = "EMPTY"
-    vllm_model_id: str | None = None
+    vllm_model_id: str = DISPLAY_MODEL_NAME
     vllm_timeout_seconds: int = 120
     vllm_startup_timeout_seconds: int = 600
 
@@ -113,17 +115,28 @@ class Settings(BaseSettings):
             raise ValueError(f"log_level must be one of {sorted(valid)}")
         return level
 
-    @field_validator("app_name", "model_name")
+    @field_validator("app_name", "model_name", "vllm_model_id")
     @classmethod
     def enforce_display_name(cls, value: str) -> str:
-        if value != DISPLAY_MODEL_NAME:
+        normalized = value.strip()
+        if normalized.casefold() != DISPLAY_MODEL_NAME.casefold():
             raise ValueError(f"Display name must be '{DISPLAY_MODEL_NAME}'.")
-        return value
+        return DISPLAY_MODEL_NAME
 
     @field_validator("model_store_dir")
     @classmethod
     def expand_model_store_dir(cls, value: str) -> str:
         return str(Path(value).expanduser())
+
+    @field_validator("model_local_dir_name")
+    @classmethod
+    def normalize_model_local_dir_name(cls, value: str) -> str:
+        normalized = value.strip().strip("/").strip("\\")
+        if not normalized:
+            raise ValueError("model_local_dir_name must not be empty")
+        if "/" in normalized or "\\" in normalized:
+            raise ValueError("model_local_dir_name must be a single directory name")
+        return normalized
 
     @field_validator("model_filename")
     @classmethod
@@ -142,14 +155,6 @@ class Settings(BaseSettings):
         if not normalized:
             raise ValueError("vllm base_url must not be empty")
         return normalized
-
-    @field_validator("vllm_model_id")
-    @classmethod
-    def normalize_vllm_model_id(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        normalized = value.strip()
-        return normalized or None
 
     @field_validator("vllm_port")
     @classmethod
@@ -206,8 +211,12 @@ class Settings(BaseSettings):
         return None
 
     @property
+    def effective_log_level(self) -> str:
+        return "DEBUG" if self.verbose_logs else "ERROR"
+
+    @property
     def resolved_vllm_model_id(self) -> str:
-        return self.vllm_model_id or self.model_repo_id
+        return self.vllm_model_id
 
     @property
     def max_upload_bytes(self) -> int:

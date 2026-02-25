@@ -24,7 +24,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    configure_logging(settings.log_level)
+    configure_logging(settings.effective_log_level)
     model_store_path = ensure_model_store(settings)
     logger.info(
         "Starting OCR API",

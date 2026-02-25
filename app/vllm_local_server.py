@@ -11,7 +11,7 @@ from app.model_store import ensure_model_store, resolve_repo_dir
 
 def main() -> None:
     settings = get_settings()
-    configure_logging(settings.log_level)
+    configure_logging(settings.effective_log_level)
 
     ensure_model_store(settings)
     model_path = resolve_repo_dir(settings)
